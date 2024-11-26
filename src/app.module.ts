@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
+
+import { CharactersModule } from './contexts/characters/characters.module'
+import { MongooseModule } from '@nestjs/mongoose'
+
+const MONGO_URL = 'mongodb://root:example@localhost:27017/rick-and-morty?authSource=admin'
 
 @Module({
-    imports: [],
-    controllers: [AppController],
-    providers: [AppService],
+    imports: [MongooseModule.forRoot(MONGO_URL), CharactersModule],
+    controllers: [],
+    providers: [],
 })
 export class AppModule {}
