@@ -10,12 +10,28 @@ import { CharacterRepository } from '../@types/character-repository'
 export class CharactersRepositoryImpl implements CharacterRepository {
     constructor(@InjectModel(Character.name) private readonly characterModel: Model<Character>) {}
 
-    async findBy(filter: Partial<ICharacter>): Promise<ICharacter[]> {
-        return await this.characterModel.find(filter)
+    async findBy(
+        filter: Partial<ICharacter & { page: number; limit: number }>,
+    ): Promise<ICharacter[]> {
+        const { page, limit, ...rest } = filter
+
+        const query = this.characterModel.find(rest)
+
+        if (page && limit) {
+            const skip = (page - 1) * limit
+
+            query.skip(skip)
+            query.limit(limit)
+        }
+
+        return await query.select('-__v').lean().exec()
     }
 
     async findOneBy(filter: Partial<ICharacter>): Promise<ICharacter | null> {
-        return await this.characterModel.findOne(filter).lean().exec()
+        const data = await this.characterModel.findOne(filter).select('-__v').lean().exec()
+        if (!data) return null
+
+        return data
     }
 
     async create(character: ICharacter | ICharacter[]): Promise<void> {
