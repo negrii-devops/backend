@@ -6,7 +6,7 @@ import { ICharacter } from './@types/character'
 @Schema({ collection: 'characters', timestamps: true })
 export class Character extends Document implements ICharacter {
     @Prop({ required: true, unique: true, index: true })
-    id: number
+    id: string
 
     @Prop({ required: true })
     name: string
@@ -23,22 +23,19 @@ export class Character extends Document implements ICharacter {
     @Prop({ required: true })
     gender: string
 
-    @Prop(raw({ name: String, url: String }))
-    origin: { name: string; url: string }
+    @Prop(raw({ id: String, name: String }))
+    origin: { id: string; name: string }
 
-    @Prop(raw({ name: String, url: String }))
-    location: { name: string; url: string }
+    @Prop(raw({ id: String, name: String }))
+    location: { id: string; name: string }
 
     @Prop({ required: true })
-    image: string
+    avatar: string
 
     @Prop([String])
     episode: string[]
 
-    @Prop({ required: true })
-    url: string
-
-    @Prop({ default: Date.now, required: true })
+    @Prop({ default: Date.now })
     createdAt: Date
 
     @Prop({ default: Date.now })
