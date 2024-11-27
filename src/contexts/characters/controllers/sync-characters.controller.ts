@@ -1,5 +1,7 @@
 import { ConflictException, Controller, Post } from '@nestjs/common'
 import axios from 'axios'
+import { writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
 
 import { CharactersRepositoryImpl } from '../repositories/characters.repository-impl'
 import { ICharacter } from '../@types/character'
@@ -26,27 +28,59 @@ export class SyncCharactersController {
 
             page = response.data.info.next ? page + 1 : null
 
-            const characters = response.data.results.map((character) => {
+            const charactersPromise = response.data.results.map(async (character) => {
                 const item: ICharacter = {
-                    id: character.id,
+                    id: character.id.toString(),
                     name: character.name,
                     status: character.status,
                     species: character.species,
                     type: character.type,
                     gender: character.gender,
-                    origin: character.origin,
-                    location: character.location,
-                    image: character.image,
-                    episode: character.episode,
-                    url: character.url,
+                    origin: {
+                        id: character.origin.url.split('/').pop(),
+                        name: character.origin.name,
+                    },
+                    location: {
+                        id: character.location.url.split('/').pop(),
+                        name: character.location.name,
+                    },
+                    avatar: character.image.split('/').pop(),
+                    episode: character.episode.map((episode) => episode.split('/').pop()),
                     createdAt: new Date(character.created),
                     updatedAt: new Date(character.created),
                 }
 
+                await this.storeImage(character.image, item.id)
+
                 return item
             })
 
+            const characters = await Promise.all(charactersPromise)
+
             await this.charactersRepository.create(characters)
+        }
+    }
+
+    private async storeImage(imageUrl: string, characterId: string) {
+        try {
+            const response = await axios.get(imageUrl, {
+                responseType: 'arraybuffer',
+            })
+
+            if (response.status !== 200) {
+                throw new Error('Error fetching image')
+            }
+
+            const filePath = join(
+                __dirname,
+                '../../../../uploads/characters/',
+                `${characterId}.jpeg`,
+            )
+
+            await writeFile(filePath, response.data)
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : error
+            console.log(`Error fetching image for character ${characterId}:\n`, msg)
         }
     }
 }
