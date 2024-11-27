@@ -2,30 +2,40 @@ version: '3.8'
 
 services:
   mongo:
-    image: mongo:latest   # Uses the latest MongoDB version
+    image: mongo:8.0.4-rc0
     container_name: mongo-db
     ports:
-      - "27017:27017"      # Exposes MongoDB default port to the host machine
+      - '27017:27017'
     volumes:
-      - mongo_data:/data/db   # Persists MongoDB data between restarts
+      - mongo_data:/data/db
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
-    restart: unless-stopped    # Ensures MongoDB restarts automatically on failure
+    restart: unless-stopped
+    networks:
+      - app-network
 
   mongo-express:
-    image: mongo-express:latest    # Mongo-Express image
+    image: mongo-express:1.0.2-20-alpine3.19
     container_name: mongo-express
     ports:
-      - "8081:8081"      # Exposes Mongo-Express web panel on port 8081
+      - '8081:8081'
     environment:
-      - ME_CONFIG_MONGODB_SERVER=mongo     # Name of the MongoDB service
-      - ME_CONFIG_MONGODB_PORT=27017       # MongoDB port
-      - ME_CONFIG_MONGODB_ADMINUSERNAME=root  # MongoDB admin username
-      - ME_CONFIG_MONGODB_ADMINPASSWORD=example  # MongoDB admin password
-      - ME_CONFIG_SITE_PORT=8081          # The port the web panel will be available on
+      - ME_CONFIG_MONGODB_SERVER=mongo
+      - ME_CONFIG_MONGODB_PORT=27017
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=root
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=example
+      - ME_CONFIG_SITE_PORT=8081
+    restart: unless-stopped
     depends_on:
-      - mongo  # Wait for MongoDB to start before starting Mongo-Express
+      - mongo
+    networks:
+      - app-network
 
 volumes:
-  mongo_data:  # Named volume for persistent MongoDB data storage
+  mongo_data:
+
+networks:
+  app-network:
+    name: app-network
+    driver: bridge
